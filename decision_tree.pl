@@ -5,7 +5,20 @@ del(X, [Y | Rest0], [Y | Rest]):-
 attribute(size, [small, large]).
 attribute(shape, [long, compact, other]).
 attribute(holes, [none, 1, 2, 3, many]).
-
+/*
+example(nut, [size = small]).
+example(nut, [size = small]).
+example(nut, [size = small]).
+example(nut, [size = small]).
+example(nut, [size = large]).
+example(nut, [size = small]).
+example(nut, [size = small]).
+example(nut, [size = large]).
+example(nut, [size = large]).
+example(nut, [size = large]).
+example(nut, [size = large]).
+example(nut, [size = small]).
+*/
 example(nut, [size = small, shape = compact, holes = 1]).
 example(screw, [size = small, shape = long, holes = none]).
 example(key, [size = small, shape = long, holes = 1]).
@@ -22,18 +35,28 @@ example(key, [size = small, shape = other, holes = 2]).
 induce_tree(Tree):-
     findall(example(Class, Obj), example(Class, Obj), Examples),
     findall(Att, attribute(Att, _), Attributes),
-    induce_tree(Attributes, Examples, Tree).
+    induce_tree(Attributes, Examples, Tree),!,write(Tree).
 
 induce_tree(_, [], null):- !. % No examples to learn from
+induce_tree([], _, null):- !. % No attributes left
 
-induce_tree(_, example(Class, _), leaf(Class)):- % Only one class in our dataset
-    \+ (member(example(Class2, _), Examples)),
-    Class2 \== Class, !.
+induce_tree(_, [example(Class, _) | Examples], leaf(Class)):- % Only one class in our dataset
+    write("Only 1 class!"),nl,
+    \+ (
+        member(example(Class2, _), Examples),
+        Class2 \== Class
+    ), !.
+
 induce_tree(Attributes, Examples, tree(Attribute, SubTrees)):-
+    write('HOLA'),nl,
     choose_attribute(Attributes, Examples, Attribute), % Select the best attribute
+    write("Selected attribute for split = "), write(Attribute), nl,
     del(Attribute, Attributes, RemainingAttributes),
     attribute(Attribute, Values), % Get the possible values of the selected attribute
-    induce_trees(Attribute, Values, RemainingAttributes, Examples, SubTrees).
+    induce_trees(Attribute, Values, RemainingAttributes, Examples, SubTrees),
+    write("Finished first iteration"),nl.
+    % write(RemainingAttributes),nl,
+    % write(Examples).
 
 %induce_trees(Att, Vals, RestAtts, Examples, SubTrees)
 
@@ -41,8 +64,12 @@ induce_trees(_, [], _, _, []).
 
 
 induce_trees(Att, [Val1 | Vals], RestAtts, Examples, [Val1 : Tree1 | Trees]):-
+    write("Inside induce_trees! Val1 = "), write(Val1), write(" remaining vals = "), write(Vals), write(" RestAtts = "), write(RestAtts), nl,
     get_subset_by_feature_query(Att = Val1, Examples, ExampleSubset),
-    induce_tree(RestAtts, ExamplesSubset, Tree1),
+    write(" RestAtts = "), write(RestAtts), write(" ExampleSubset = "), write(ExampleSubset), write("Tree1 = "), write(Tree1), nl,
+    induce_tree(RestAtts, ExampleSubset, Tree1),
+    write("Tree1 = "), write(Tree1), nl,
+    write("After call to `induce_tree` which apparently doesn't work"),nl,
     induce_trees(Att, Vals, RestAtts, Examples, Trees).
 
 satisfy(Object, Conj):-
